@@ -21,28 +21,37 @@
         <input id="m" autocomplete="off" /><button>Send</button>
     </form>
 
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var nickname = prompt("Type your nickname:");
-        var socket = io();
-        $('form').submit(function() {
-            socket.emit('chat message', {
-                nick: nickname,
-                msg: $('#m').val()
-            });
+        var socket = io('http://localhost:3099');
+
+        $('form').submit((e) => {
+            e.preventDefault();
+            socket.emit('chat message', $('#m').val());
             $('#m').val('');
             return false;
         });
-        socket.on('user-connected', function (msg) {
+
+        var userConnected = (msg) => {
+            console.log('>> USER CONNECTED: ' + msg)
             $('#messages').append($('<li>').html('<b>' + msg + '</b>'));
-        });
-        socket.on('user-disconnected', function (msg) {
+        };
+
+        var userDisconnected = (msg) => {
             $('#messages').append($('<li>').html('<b>' + msg + '</b>'));
-        });
-        socket.on('chat message', function(msg) {
+        };
+
+        var chatMessage = (msg) => {
             $('#messages').append($('<li>').html(msg));
+        };
+
+        socket.on('connect', () => {
+            socket.emit('add-user', prompt('Type your name:'))
         });
+        socket.on('user-connected', userConnected);
+        socket.on('user-disconnected', userDisconnected);
+        socket.on('chat message', chatMessage);
     </script>
 </body>
 </html>

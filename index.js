@@ -1,23 +1,32 @@
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
 
-http.listen(3000, function() {
-  console.log('listening on *:3000');
-});
+'use strict'
 
-app.get('/', function(req, res) {
-  res.sendfile('index.html');
-});
+var app = require('express')()
+var server = require('http').Server(app)
+var io = require('socket.io')(server)
 
-io.on('connection', function(socket) {
-  socket.broadcast.emit('user-connected', 'A user connected');
+var users = {}
 
-  socket.on('chat message', function(obj) {
-    io.emit('chat message', '<b>' + obj.nick + ':</b>' + obj.msg);
-  });
+server.listen(3099, () => {
+  console.log('listening on *:3099')
+})
 
-  socket.on('disconnect', function() {
-    socket.broadcast.emit('user-disconnected', 'A user disconnected');
-  });
-});
+app.get('/', (req, res) => {
+  res.sendFile(`${__dirname}/public/index.html`)
+})
+
+io.on('connection', (socket) => {
+  socket.on('add-user', (username) => {
+    socket.username = users[username] = username
+    socket.broadcast.emit('user-connected', 'A user connected')
+  })
+
+  socket.on('chat message', (msg) => {
+    io.emit('chat message', `<b>${socket.username} says:</b> ${msg}`)
+  })
+
+  socket.on('disconnect', () => {
+    delete users[socket.username]
+    socket.broadcast.emit('user-disconnected', 'A user disconnected')
+  })
+})
