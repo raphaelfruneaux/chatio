@@ -18,15 +18,17 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   socket.on('add-user', (username) => {
     socket.username = users[username] = username
-    socket.broadcast.emit('user-connected', 'A user connected')
+    socket.broadcast.emit('user-connected', `<b>${username} has connected</b>`)
+    socket.broadcast.emit('user-update', users)
   })
 
   socket.on('chat message', (msg) => {
-    io.emit('chat message', `<b>${socket.username} says:</b> ${msg}`)
+    socket.broadcast.emit('chat message', `<b>${socket.username} says:</b> ${msg}`)
   })
 
   socket.on('disconnect', () => {
     delete users[socket.username]
-    socket.broadcast.emit('user-disconnected', 'A user disconnected')
+    socket.broadcast.emit('user-disconnected', `<b>${socket.username} disconnected</b>`)
+    socket.broadcast.emit('user-update', users)
   })
 })

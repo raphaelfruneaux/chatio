@@ -4,19 +4,23 @@
     <meta charset="UTF-8">
     <title>Socket.IO chat</title>
     <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+       * { margin: 0; padding: 0; box-sizing: border-box; }
+       html, body { height: 100%; }
        body { font: 13px Helvetica, Arial; }
        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
        form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-       #messages { list-style-type: none; margin: 0; padding: 0; }
+       #messages { width: calc(100vw - 200px); list-style-type: none; margin: 0; padding: 0; float: left; }
        #messages li { padding: 5px 10px; }
        #messages li:nth-child(odd) { background: #eee; }
+       #users { width: 200px; height: 100%; margin: 0; padding: 20px; float: right; background-color: rgb(227, 227, 214)}
     </style>
 
 </head>
 <body>
     <ul id="messages"></ul>
+    <ul id="users"></ul>
+
     <form action="">
         <input id="m" autocomplete="off" /><button>Send</button>
     </form>
@@ -28,30 +32,42 @@
 
         $('form').submit((e) => {
             e.preventDefault();
-            socket.emit('chat message', $('#m').val());
-            $('#m').val('');
+            var msg = $('#m').val();
+            $('#m').val('').focus();
+            updateMessage('<b>You says:</b> ' + msg);
+            socket.emit('chat message', msg);
             return false;
         });
 
         var userConnected = (msg) => {
-            console.log('>> USER CONNECTED: ' + msg)
-            $('#messages').append($('<li>').html('<b>' + msg + '</b>'));
+            updateMessage(msg);
         };
 
         var userDisconnected = (msg) => {
-            $('#messages').append($('<li>').html('<b>' + msg + '</b>'));
+            updateMessage(msg);
         };
 
-        var chatMessage = (msg) => {
+        var updateMessage = (msg) => {
             $('#messages').append($('<li>').html(msg));
+        };
+
+        var updateUsers = (users) => {
+            console.log(users);
+
+            $('#users').html('');
+            // users.forEach((user, i) => {
+            //     $('#users').append($('<li>').html(user));
+            // });
         };
 
         socket.on('connect', () => {
             socket.emit('add-user', prompt('Type your name:'))
         });
+
         socket.on('user-connected', userConnected);
         socket.on('user-disconnected', userDisconnected);
-        socket.on('chat message', chatMessage);
+        socket.on('user-update', updateUsers);
+        socket.on('chat message', updateMessage);
     </script>
 </body>
 </html>
