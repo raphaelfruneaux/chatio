@@ -22,13 +22,14 @@
     <ul id="users"></ul>
 
     <form action="">
-        <input id="m" autocomplete="off" /><button>Send</button>
+        <input id="m" autocomplete="off" onkeypress="userTyping()" /><button>Send</button>
     </form>
 
     <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io('http://localhost:3099');
+        var timeout = 0;
 
         $('form').submit((e) => {
             e.preventDefault();
@@ -38,6 +39,14 @@
             socket.emit('chat message', msg);
             return false;
         });
+
+        var userTyping = () => {
+            socket.emit('typing', null);
+        };
+
+        var userTypingResponse = (msg) => {
+            updateMessage(msg);
+        };
 
         var userConnected = (msg) => {
             updateMessage(msg);
@@ -52,12 +61,10 @@
         };
 
         var updateUsers = (users) => {
-            console.log(users);
-
             $('#users').html('');
-            // users.forEach((user, i) => {
-            //     $('#users').append($('<li>').html(user));
-            // });
+            Object.keys(users).forEach((user, i) => {
+                $('#users').append($('<li>').html(user));
+            });
         };
 
         socket.on('connect', () => {
@@ -68,6 +75,7 @@
         socket.on('user-disconnected', userDisconnected);
         socket.on('user-update', updateUsers);
         socket.on('chat message', updateMessage);
+        socket.on('is-typing', userTypingResponse)
     </script>
 </body>
 </html>

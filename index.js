@@ -19,7 +19,7 @@ io.on('connection', (socket) => {
   socket.on('add-user', (username) => {
     socket.username = users[username] = username
     socket.broadcast.emit('user-connected', `<b>${username} has connected</b>`)
-    socket.broadcast.emit('user-update', users)
+    io.sockets.emit('user-update', users)
   })
 
   socket.on('chat message', (msg) => {
@@ -27,8 +27,12 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () => {
-    delete users[socket.username]
     socket.broadcast.emit('user-disconnected', `<b>${socket.username} disconnected</b>`)
-    socket.broadcast.emit('user-update', users)
+    io.sockets.emit('user-update', users)
+    delete users[socket.username]
+  })
+
+  socket.on('typing', () => {
+    socket.broadcast.emit('is-typing', `<b>${socket.username}</b> is typing!`)
   })
 })
